@@ -1,0 +1,16 @@
+name: flutter_demo_3d
+description: A simple Wavefront 3D object renderer in Flutter
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/file.obj
+
+  uses-material-design: true
