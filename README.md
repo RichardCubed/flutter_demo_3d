@@ -7,7 +7,7 @@ What better way to learn a new framework than a bit of 3D?  Now I'm not suggesti
 A Wavefront .OBJ parser<br/>
 Custom painting on a canvas<br/>
 Loading bundled assets at runtime<br/>
-An exampe of using drag gestures<br/>
+An example of using drag gestures<br/>
 An example of how to perform basic 3D matrix operations</br>
 
 ## License
