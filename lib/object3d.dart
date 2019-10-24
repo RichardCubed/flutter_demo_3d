@@ -43,7 +43,8 @@ class _Object3DState extends State<Object3D> {
   _dragX(DragUpdateDetails update) {
     setState(() {
       angleX += update.delta.dy;
-      if (angleX > 360) angleX = angleX - 360;
+      if (angleX > 360)
+        angleX = angleX - 360;
       else if (angleX < 0) angleX = 360 - angleX;
     });
   }
@@ -51,7 +52,8 @@ class _Object3DState extends State<Object3D> {
   _dragY(DragUpdateDetails update) {
     setState(() {
       angleY += update.delta.dx;
-      if (angleY > 360) angleY = angleY - 360;
+      if (angleY > 360)
+        angleY = angleY - 360;
       else if (angleY < 0) angleY = 360 - angleY;
     });
   }
@@ -59,13 +61,13 @@ class _Object3DState extends State<Object3D> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      child: CustomPaint(
-        painter: _ObjectPainter(widget.size, object, angleX, angleY, angleZ, widget.zoom),
-        size: widget.size,
-      ),
-      onHorizontalDragUpdate: (DragUpdateDetails update) => _dragY(update),
-      onVerticalDragUpdate: (DragUpdateDetails update) => _dragX(update)
-    );
+        child: CustomPaint(
+          painter: _ObjectPainter(
+              widget.size, object, angleX, angleY, angleZ, widget.zoom),
+          size: widget.size,
+        ),
+        onHorizontalDragUpdate: (DragUpdateDetails update) => _dragY(update),
+        onVerticalDragUpdate: (DragUpdateDetails update) => _dragX(update));
   }
 }
 
@@ -94,7 +96,8 @@ class _ObjectPainter extends CustomPainter {
 
   Model model;
 
-  _ObjectPainter(this.size, this.object, this.angleX, this.angleY, this.angleZ, this._zoom) {
+  _ObjectPainter(this.size, this.object, this.angleX, this.angleY, this.angleZ,
+      this._zoom) {
     camera = Vector3(0.0, 0.0, 0.0);
     light = Vector3(0.0, 0.0, 100.0);
     color = Color.fromRGBO(255, 255, 255, 1);
@@ -121,7 +124,7 @@ class _ObjectPainter extends CustomPainter {
    *  https://www.euclideanspace.com/maths/geometry/affine/matrix4x4/index.htm
    */
   Vector3 _calcVertex(Vector3 vertex) {
-    var trans = Matrix.Matrix4.translationValues(_viewPortX, _viewPortY, 0.0);
+    var trans = Matrix.Matrix4.translationValues(_viewPortX, _viewPortY, 1);
     trans.scale(_zoom, -_zoom);
     trans.rotateX(Utils.degreeToRadian(angleX));
     trans.rotateY(Utils.degreeToRadian(angleY));
@@ -132,13 +135,9 @@ class _ObjectPainter extends CustomPainter {
   /*
    *  Calculate the lighting and paint the polygon on the canvas.
    */
-  void _drawFace(Canvas canvas, List<Vector3> vertices, List face) {
+  void _drawFace(Canvas canvas, Vector3 v1, Vector3 v2, Vector3 v3) {
     // Calculate the surface normal
-    var normalVector = Utils.normalVector3(
-      vertices[face[0] - 1],
-      vertices[face[1] - 1],
-      vertices[face[2] - 1],
-    );
+    var normalVector = Utils.normalVector3(v1, v2, v3);
 
     // Calculate the lighting
     Vector3 normalizedLight = Vector3.copy(light).normalized();
@@ -153,10 +152,10 @@ class _ObjectPainter extends CustomPainter {
 
     // Paint the face
     var path = Path();
-    path.moveTo(vertices[face[0] - 1][0], vertices[face[0] - 1][1]);
-    path.lineTo(vertices[face[1] - 1][0], vertices[face[1] - 1][1]);
-    path.lineTo(vertices[face[2] - 1][0], vertices[face[2] - 1][1]);
-    path.lineTo(vertices[face[0] - 1][0], vertices[face[0] - 1][1]);
+    path.moveTo(v1.x, v1.y);
+    path.lineTo(v2.x, v2.y);
+    path.lineTo(v3.x, v3.y);
+    path.lineTo(v1.x, v1.y);
     path.close();
     canvas.drawPath(path, paint);
   }
@@ -180,7 +179,8 @@ class _ObjectPainter extends CustomPainter {
     var faces = List<List<int>>();
     for (var i = 0; i < model.faces.length; i++) {
       var face = model.faces[i];
-      if (_shouldDrawFace(vertices[face[0] - 1], vertices[face[1] - 1], vertices[face[2] - 1])) {
+      if (_shouldDrawFace(vertices[face[0] - 1], vertices[face[1] - 1],
+          vertices[face[2] - 1])) {
         faces.add(face);
       }
     }
@@ -202,7 +202,11 @@ class _ObjectPainter extends CustomPainter {
 
     // Render
     for (int i = 0; i < sorted.length; i++) {
-      _drawFace(canvas, vertices, faces[sorted[i]["index"]]);
+      var face = faces[sorted[i]["index"]];
+      _drawFace(canvas, 
+          vertices[face[0] - 1], 
+          vertices[face[1] - 1],
+          vertices[face[2] - 1]);
     }
   }
 
