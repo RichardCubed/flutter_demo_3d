@@ -2,7 +2,7 @@ import 'dart:core';
 import 'package:vector_math/vector_math.dart';
 
 /*
- *  A very simple Wavefront OBJ parser.
+ *  A very simple Wavefront .OBJ parser.
  *  https://en.wikipedia.org/wiki/Wavefront_.obj_file
  */
 class Model {

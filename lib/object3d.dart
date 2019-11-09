@@ -17,7 +17,7 @@ class Object3D extends StatefulWidget {
   final String path;
   final double zoom;
 
-  Object3D({@required this.size, @required this.path, this.zoom = 3.0});
+  Object3D({@required this.size, @required this.path, @required this.zoom});
 
   @override
   _Object3DState createState() => _Object3DState();
@@ -62,8 +62,7 @@ class _Object3DState extends State<Object3D> {
   Widget build(BuildContext context) {
     return GestureDetector(
         child: CustomPaint(
-          painter: _ObjectPainter(
-              widget.size, object, angleX, angleY, angleZ, widget.zoom),
+          painter: _ObjectPainter(widget.size, object, angleX, angleY, angleZ, widget.zoom),
           size: widget.size,
         ),
         onHorizontalDragUpdate: (DragUpdateDetails update) => _dragY(update),
@@ -77,12 +76,12 @@ class _Object3DState extends State<Object3D> {
  *  https://api.flutter.dev/flutter/rendering/CustomPainter-class.html
  */
 class _ObjectPainter extends CustomPainter {
-  double _zoom = 100.0;
 
   final String object;
 
   double _viewPortX = 0.0;
   double _viewPortY = 0.0;
+  double _zoom = 0.0;
 
   Vector3 camera;
   Vector3 light;
@@ -96,8 +95,7 @@ class _ObjectPainter extends CustomPainter {
 
   Model model;
 
-  _ObjectPainter(this.size, this.object, this.angleX, this.angleY, this.angleZ,
-      this._zoom) {
+  _ObjectPainter(this.size, this.object, this.angleX, this.angleY, this.angleZ, this._zoom) {
     camera = Vector3(0.0, 0.0, 0.0);
     light = Vector3(0.0, 0.0, 100.0);
     color = Color.fromRGBO(255, 255, 255, 1);
@@ -167,7 +165,10 @@ class _ObjectPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     model = Model();
-    model.loadFromString(object);
+
+    if (object != null) {
+      model.loadFromString(object);
+    }
 
     // Rotate and translate the vertices
     List<Vector3> vertices = []..addAll(model.vertices);

@@ -1,0 +1,17 @@
+newmtl Frontal
+Kd 0.848100 0.607500 1.000000
+
+newmtl Occipital
+Kd 1.000000 0.572600 0.392400
+
+newmtl Parietal
+Kd 0.379700 0.830900 1.000000
+
+newmtl Temporal
+Kd 1.000000 0.930700 0.468300
+
+newmtl cerebellum
+Kd 0.506300 1.000000 0.598200
+
+newmtl lambert1
+Kd 0.500000 0.500000 0.500000

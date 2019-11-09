@@ -8,16 +8,18 @@ void main() {
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
+    return MaterialApp(
       title: 'Object Viewer',
-      home: new Scaffold(
-        appBar: new AppBar(
+      home: Scaffold(
+        backgroundColor: Color.fromRGBO(33, 33, 33, 1),
+        appBar: AppBar(
           title: const Text("Flutter 3D"),
         ),
-        body: new Center(
-          child: new Object3D(
-            size: const Size(400.0, 400.0),
-            path: "assets/file.obj",
+        body: Center(
+          child: Object3D(
+            size: const Size(100.0, 100.0),
+            zoom: 30.0,
+            path: "assets/brain.obj",
           ),
         ),
       ),

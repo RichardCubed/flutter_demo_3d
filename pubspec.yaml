@@ -11,6 +11,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/file.obj
+    - assets/brain.obj
+    - assets/brain.mtl
 
   uses-material-design: true
