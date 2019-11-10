@@ -6,11 +6,10 @@ import 'package:flutter_demo_3d/model.dart';
 import 'package:flutter_demo_3d/utils.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
-import 'package:vector_math/vector_math.dart';
-import 'package:vector_math/vector_math.dart' as Matrix;
+import 'package:vector_math/vector_math.dart' as Math;
 
 class Object3D extends StatefulWidget {
   final Size size;
@@ -27,14 +26,18 @@ class _Object3DState extends State<Object3D> {
   double angleX = 0.0;
   double angleY = 0.0;
   double angleZ = 0.0;
-
   double zoom = 0.0;
-  String object;
 
+  Model model;
+
+  /*
+   *  Load the 3D  data from a file in our /assets folder.
+   */
   void initState() {
     rootBundle.loadString(widget.path).then((value) {
       setState(() {
-        object = value;
+        model = Model();
+        model.loadFromString(value);
       });
     });
     super.initState();
@@ -61,12 +64,13 @@ class _Object3DState extends State<Object3D> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-        child: CustomPaint(
-          painter: _ObjectPainter(widget.size, object, angleX, angleY, angleZ, widget.zoom),
-          size: widget.size,
-        ),
-        onHorizontalDragUpdate: (DragUpdateDetails update) => _dragY(update),
-        onVerticalDragUpdate: (DragUpdateDetails update) => _dragX(update));
+      child: CustomPaint(
+        painter: _ObjectPainter(widget.size, model, angleX, angleY, angleZ, widget.zoom),
+        size: widget.size,
+      ),
+      onHorizontalDragUpdate: (DragUpdateDetails update) => _dragY(update),
+      onVerticalDragUpdate: (DragUpdateDetails update) => _dragX(update),
+    );
   }
 }
 
@@ -76,44 +80,29 @@ class _Object3DState extends State<Object3D> {
  *  https://api.flutter.dev/flutter/rendering/CustomPainter-class.html
  */
 class _ObjectPainter extends CustomPainter {
-
-  final String object;
-
   double _viewPortX = 0.0;
   double _viewPortY = 0.0;
   double _zoom = 0.0;
 
-  Vector3 camera;
-  Vector3 light;
+  Math.Vector3 camera;
+  Math.Vector3 light;
 
   double angleX;
   double angleY;
   double angleZ;
 
-  Color color;
   Size size;
 
-  Model model;
+  List<Math.Vector3> verts;
 
-  _ObjectPainter(this.size, this.object, this.angleX, this.angleY, this.angleZ, this._zoom) {
-    camera = Vector3(0.0, 0.0, 0.0);
-    light = Vector3(0.0, 0.0, 100.0);
-    color = Color.fromRGBO(255, 255, 255, 1);
+  final Model model;
+
+  _ObjectPainter(this.size, this.model, this.angleX, this.angleY, this.angleZ, this._zoom) {
+    camera = Math.Vector3(0.0, 0.0, 0.0);
+    light = Math.Vector3(0.0, 0.0, 100.0);
+    verts = List<Math.Vector3>();
     _viewPortX = (size.width / 2).toDouble();
     _viewPortY = (size.height / 2).toDouble();
-  }
-
-  /*
-   *  We only want to draw faces that are pointing towards the camera.  We can do 
-   *  this by calculating the dot product of both and the angle between them.
-   *  https://en.wikipedia.org/wiki/Dot_product.
-   */
-  bool _shouldDrawFace(Vector3 p1, Vector3 p2, Vector3 p3) {
-    var normalVector = Utils.normalVector3(p1, p2, p3);
-    var dotProduct = normalVector.dot(camera);
-    double vectorLengths = normalVector.length * camera.length;
-    double angleBetween = dotProduct / vectorLengths;
-    return angleBetween > 0 || true;
   }
 
   /*
@@ -121,8 +110,8 @@ class _ObjectPainter extends CustomPainter {
    *  a single pass.
    *  https://www.euclideanspace.com/maths/geometry/affine/matrix4x4/index.htm
    */
-  Vector3 _calcVertex(Vector3 vertex) {
-    var trans = Matrix.Matrix4.translationValues(_viewPortX, _viewPortY, 1);
+  Math.Vector3 _calcVertex(Math.Vector3 vertex) {
+    var trans = Math.Matrix4.translationValues(_viewPortX, _viewPortY, 1);
     trans.scale(_zoom, -_zoom);
     trans.rotateX(Utils.degreeToRadian(angleX));
     trans.rotateY(Utils.degreeToRadian(angleY));
@@ -133,19 +122,28 @@ class _ObjectPainter extends CustomPainter {
   /*
    *  Calculate the lighting and paint the polygon on the canvas.
    */
-  void _drawFace(Canvas canvas, Vector3 v1, Vector3 v2, Vector3 v3) {
+  void _drawFace(Canvas canvas, List<int> face, Color color) {
+    // Reference the rotated vertices
+    var v1 = verts[face[0] - 1];
+    var v2 = verts[face[1] - 1];
+    var v3 = verts[face[2] - 1];
+
     // Calculate the surface normal
     var normalVector = Utils.normalVector3(v1, v2, v3);
 
     // Calculate the lighting
-    Vector3 normalizedLight = Vector3.copy(light).normalized();
-    var jnv = Vector3.copy(normalVector).normalized();
+    Math.Vector3 normalizedLight = Math.Vector3.copy(light).normalized();
+    var jnv = Math.Vector3.copy(normalVector).normalized();
     var normal = Utils.scalarMultiplication(jnv, normalizedLight);
-    var brightness = (normal.clamp(0.0, 1.0) * 255).round();
+    var brightness = normal.clamp(0.0, 1.0);
 
     // Assign a lighting color
+    var r = (brightness * color.red).toInt();
+    var g = (brightness * color.green).toInt();
+    var b = (brightness * color.blue).toInt();
+
     var paint = Paint();
-    paint.color = Color.fromARGB(255, brightness, brightness, brightness);
+    paint.color = Color.fromARGB(255, r, g, b);
     paint.style = PaintingStyle.fill;
 
     // Paint the face
@@ -159,55 +157,38 @@ class _ObjectPainter extends CustomPainter {
   }
 
   /*
-   *  Override the paint method.  Rotate the verticies, remove the backfaces, sort
-   *  and finally render our 3D model.
+   *  Override the paint method.  Rotate the verticies, sort and finally render
+   *  our 3D model.
    */
   @override
   void paint(Canvas canvas, Size size) {
-    model = Model();
-
-    if (object != null) {
-      model.loadFromString(object);
+    // If we've not loaded the model then there's nothing to render
+    if (model == null) {
+      return;
     }
 
     // Rotate and translate the vertices
-    List<Vector3> vertices = []..addAll(model.vertices);
-    for (int i = 0; i < vertices.length; i++) {
-      vertices[i] = _calcVertex(vertices[i]);
-    }
-
-    // Backface removal
-    var faces = List<List<int>>();
-    for (var i = 0; i < model.faces.length; i++) {
-      var face = model.faces[i];
-      if (_shouldDrawFace(vertices[face[0] - 1], vertices[face[1] - 1],
-          vertices[face[2] - 1])) {
-        faces.add(face);
-      }
+    verts = List<Math.Vector3>();
+    for (int i = 0; i < model.verts.length; i++) {
+      verts.add(_calcVertex(Math.Vector3.copy(model.verts[i])));
     }
 
     // Sort
     var sorted = List<Map<String, dynamic>>();
-    for (var i = 0; i < faces.length; i++) {
-      var face = faces[i];
+    for (var i = 0; i < model.faces.length; i++) {
+      var face = model.faces[i];
       sorted.add({
         "index": i,
-        "order": Utils.zIndex(
-          vertices[face[0] - 1],
-          vertices[face[1] - 1],
-          vertices[face[2] - 1],
-        )
+        "order": Utils.zIndex(verts[face[0] - 1], verts[face[1] - 1], verts[face[2] - 1])
       });
     }
     sorted.sort((Map a, Map b) => a["order"].compareTo(b["order"]));
 
     // Render
     for (int i = 0; i < sorted.length; i++) {
-      var face = faces[sorted[i]["index"]];
-      _drawFace(canvas, 
-          vertices[face[0] - 1], 
-          vertices[face[1] - 1],
-          vertices[face[2] - 1]);
+      var face = model.faces[sorted[i]["index"]];
+      var color = model.colors[sorted[i]["index"]];
+      _drawFace(canvas, face, color);
     }
   }
 

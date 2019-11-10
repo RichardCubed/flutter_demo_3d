@@ -2,10 +2,9 @@ import 'dart:core';
 import 'dart:math' as Math;
 
 import 'package:vector_math/vector_math.dart';
-import 'package:vector_math/vector_math.dart' show Vector3;
 
 /*
- * Static helper functions for a few extra vector operations.
+ * Static helper functions for a few extra operations.
  */
 class Utils {
   /*
@@ -42,7 +41,7 @@ class Utils {
   }
 
   /*
-   *  Calulate the avarage z distance of a face.  We use this during sorting
+   *  Calulate the avarage z distance of a face.  Used during sorting
    *  and rendering to draw faces in order from back to front.
    */
   static double zIndex(Vector3 p1, Vector3 p2, Vector3 p3) {

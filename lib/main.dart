@@ -9,18 +9,23 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: ThemeData(fontFamily: 'Technical'),
+      debugShowCheckedModeBanner: false,
       title: 'Object Viewer',
       home: Scaffold(
-        backgroundColor: Color.fromRGBO(33, 33, 33, 1),
-        appBar: AppBar(
-          title: const Text("Flutter 3D"),
+          appBar: new AppBar(
+          elevation: 0,
+          backgroundColor: Color.fromRGBO(33, 33, 33, 1),
         ),
-        body: Center(
-          child: Object3D(
-            size: const Size(100.0, 100.0),
-            zoom: 30.0,
-            path: "assets/brain.obj",
-          ),
+        backgroundColor: Color.fromRGBO(33, 33, 33, 1),
+        body: Column(
+          children: [
+            Object3D(
+              size: Size(400.0, 400.0),
+              zoom: 30.0,
+              path: "assets/brain.obj",
+            ),
+          ],
         ),
       ),
     );
